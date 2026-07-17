@@ -6,6 +6,6 @@ export function maskError(error: unknown, message: string) {
   }
   console.error(error);
   return new GraphQLError(message, {
-    extensions: { code: "INTERNAL_SERVER_ERROR" },
+    extensions: { code: "INTERNAL_SERVER_ERROR", http: { status: 500 } },
   });
 }

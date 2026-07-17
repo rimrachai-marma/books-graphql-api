@@ -2,9 +2,9 @@ import { z } from "zod";
 
 export const booksQuerySchema = z
   .object({
-    first: z.number().int().positive().optional(),
+    first: z.number().int().positive().max(100).optional(),
     after: z.string().optional(),
-    last: z.number().int().positive().optional(),
+    last: z.number().int().positive().max(100).optional(),
     before: z.string().optional(),
     filter: z
       .object({
@@ -24,13 +24,13 @@ export const booksQuerySchema = z
       ctx.addIssue({ code: "custom", message: "Cannot use both 'first' and 'last'", path: ["first"] });
     }
     if (args.first == null && args.last == null) {
-      ctx.addIssue({ code: "custom", message: "Provide 'first' or 'last'", path: ["first"] });
+      ctx.addIssue({ code: "custom", message: "Either 'first' or 'last' is required", path: ["first"] });
     }
     if (args.first != null && args.before != null) {
-      ctx.addIssue({ code: "custom", message: "Use 'last' with 'before'", path: ["before"] });
+      ctx.addIssue({ code: "custom", message: "'before' cannot be used with 'first'", path: ["before"] });
     }
     if (args.last != null && args.after != null) {
-      ctx.addIssue({ code: "custom", message: "Use 'first' with 'after'", path: ["after"] });
+      ctx.addIssue({ code: "custom", message: "'after' cannot be used with 'last'", path: ["after"] });
     }
   });
 

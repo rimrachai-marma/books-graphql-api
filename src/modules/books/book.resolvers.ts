@@ -18,7 +18,7 @@ export const bookResolvers = {
     books: async (_: unknown, args: unknown, context: GraphQLContext) => {
       const bookService = new BookService(context.db);
 
-      const parsed = await booksQuerySchema.safeParseAsync(args);
+      const parsed = await booksQuerySchema.safeParse(args);
 
       if (!parsed.success) {
         const flattened = z.flattenError(parsed.error);
@@ -59,7 +59,7 @@ export const bookResolvers = {
     },
 
     updateBook: async (_: unknown, args: { id: string; input: unknown }, context: GraphQLContext) => {
-      requireAuth(context);
+      const user = requireAuth(context);
 
       if (!z.uuid().safeParse(args.id).success) {
         throw new NotFoundError(`Book with id ${args.id} not found`);
@@ -74,7 +74,7 @@ export const bookResolvers = {
 
       const bookService = new BookService(context.db);
 
-      const book = await bookService.updateBook(args.id, parsed.data);
+      const book = await bookService.updateBook(user.id, args.id, parsed.data);
 
       if (!book) {
         throw new NotFoundError(`Book with id ${args.id} not found`);
@@ -84,14 +84,14 @@ export const bookResolvers = {
     },
 
     deleteBook: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
-      requireAuth(context);
+      const user = requireAuth(context);
 
       if (!z.uuid().safeParse(id).success) {
-        throw new NotFoundError(`Book with id ${id} not found-`);
+        throw new NotFoundError(`Book with id ${id} not found`);
       }
 
       const bookService = new BookService(context.db);
-      const book = await bookService.deleteBook(id);
+      const book = await bookService.deleteBook(user.id, id);
 
       if (!book) {
         throw new NotFoundError(`Book with id ${id} not found`);

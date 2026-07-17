@@ -50,7 +50,7 @@ export const bookTypeDefs = /* GraphQL */ `
   }
 
   input BookSortInput {
-    field: BookSortField!
+    field: BookSortField! = CREATED
     direction: SortDirection! = DESC
   }
 

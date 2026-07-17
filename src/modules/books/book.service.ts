@@ -3,7 +3,7 @@ import { and, asc, desc, eq, gt, ilike, lt, lte, gte, or, sql, type SQL } from "
 import { books } from "../../drizzle/schema";
 import type { Database } from "../../config/db/database";
 import type { NewBook, UpdateBook } from "./book.types";
-import { NotFoundError, ValidationError } from "../../graphql/errors";
+import { ForbiddenError, NotFoundError, ValidationError } from "../../graphql/errors";
 
 interface BookFilter {
   authorId?: string;
@@ -178,23 +178,39 @@ export class BookService {
     return book;
   }
 
-  async updateBook(id: string, data: UpdateBook) {
-    const [book] = await this.db.update(books).set(data).where(eq(books.id, id)).returning();
+  async updateBook(userId: string, id: string, data: UpdateBook) {
+    const book = await this.db.query.books.findFirst({
+      where: eq(books.id, id),
+    });
 
     if (!book) {
       throw new NotFoundError(`Book with id ${id} not found`);
     }
 
-    return book;
+    if (book.userId !== userId) {
+      throw new ForbiddenError(`Not authorized to modify book with id ${id}`);
+    }
+
+    const [updated] = await this.db.update(books).set(data).where(eq(books.id, id)).returning();
+
+    return updated;
   }
 
-  async deleteBook(id: string) {
-    const [book] = await this.db.delete(books).where(eq(books.id, id)).returning();
+  async deleteBook(userId: string, id: string) {
+    const book = await this.db.query.books.findFirst({
+      where: eq(books.id, id),
+    });
 
     if (!book) {
       throw new NotFoundError(`Book with id ${id} not found`);
     }
 
-    return book;
+    if (book.userId !== userId) {
+      throw new ForbiddenError(`Not authorized to delete book with id ${id}`);
+    }
+
+    const [deleted] = await this.db.delete(books).where(eq(books.id, id)).returning();
+
+    return deleted;
   }
 }

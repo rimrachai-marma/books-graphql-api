@@ -17,8 +17,8 @@ export class ForbiddenError extends GraphQLError {
 }
 
 export class NotFoundError extends GraphQLError {
-  constructor(entity = "Resource") {
-    super(`${entity} not found`, {
+  constructor(message = "Resource not found") {
+    super(message, {
       extensions: { code: "NOT_FOUND", http: { status: 404 } },
     });
   }

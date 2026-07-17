@@ -36,7 +36,7 @@ export const userTypeDefs = /* GraphQL */ `
 
   enum UserSortField {
     NAME
-    CREATED_AT
+    CREATED
   }
 
   enum SortDirection {
@@ -45,7 +45,7 @@ export const userTypeDefs = /* GraphQL */ `
   }
 
   input UserSortInput {
-    field: UserSortField!
+    field: UserSortField! = CREATED
     direction: SortDirection! = DESC
   }
 
