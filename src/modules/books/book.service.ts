@@ -3,7 +3,7 @@ import { and, asc, desc, eq, gt, ilike, lt, lte, gte, or, sql, type SQL } from "
 import { books } from "../../drizzle/schema";
 import type { Database } from "../../config/db/database";
 import type { NewBook, UpdateBook } from "./book.types";
-import { NotFoundError, ValidationError } from "../../errors";
+import { NotFoundError, ValidationError } from "../../graphql/errors";
 
 interface BookFilter {
   authorId?: string;

@@ -28,6 +28,7 @@
   "dependencies": {
     "@graphql-tools/schema": "^10.0.31",
     "bcryptjs": "^3.0.3",
+    "dataloader": "^2.2.3",
     "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
     "graphql": "^16.12.0",

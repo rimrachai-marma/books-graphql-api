@@ -1,5 +1,5 @@
-import { AuthenticationError, ForbiddenError } from "../errors";
 import type { GraphQLContext } from "../types/context";
+import { AuthenticationError, ForbiddenError } from "./errors";
 
 export function requireAuth(context: GraphQLContext) {
   if (context.user) return context.user;

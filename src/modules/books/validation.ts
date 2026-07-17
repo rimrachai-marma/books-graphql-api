@@ -33,3 +33,13 @@ export const booksQuerySchema = z
       ctx.addIssue({ code: "custom", message: "Use 'first' with 'after'", path: ["after"] });
     }
   });
+
+export const createBookSchema = z.object({
+  title: z.string().min(1, "Title is required").max(255, "Title must be 255 characters or fewer"),
+  authorId: z.string().min(1, "Author ID is required"),
+});
+
+export const updateBookSchema = z.object({
+  title: z.string().min(1, "Title cannot be empty").max(255, "Title must be 255 characters or fewer").optional(),
+  authorId: z.string().min(1, "Author ID cannot be empty").optional(),
+});

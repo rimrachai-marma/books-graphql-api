@@ -1,6 +1,6 @@
 import { UserService } from "./user.service";
 import type { GraphQLContext } from "../../types/context";
-import { requireAuth } from "../../utils/authorization";
+import { requireAuth } from "../../graphql/auth";
 
 export const userResolvers = {
   Query: {

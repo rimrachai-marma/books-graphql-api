@@ -4,9 +4,10 @@ import type { YogaInitialContext } from "graphql-yoga";
 import type { GraphQLContext } from "../types/context";
 import { db } from "../config/db/database";
 import { jwtService } from "../utils/jwt";
+import { createLoaders } from "./dataloaders";
 
 export async function createContext(initialContext: YogaInitialContext): Promise<GraphQLContext> {
-  const context: GraphQLContext = { db };
+  const context: GraphQLContext = { db, loaders: createLoaders(db) };
 
   const cookies = new CookieMap(initialContext.request.headers.get("cookie") ?? "");
 

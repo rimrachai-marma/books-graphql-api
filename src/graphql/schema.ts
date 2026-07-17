@@ -1,5 +1,6 @@
 import { makeExecutableSchema } from "@graphql-tools/schema";
 
+import { scalarResolvers } from "./scalars";
 import { userTypeDefs } from "../modules/users/user.typeDefs";
 import { userResolvers } from "../modules/users/user.resolvers";
 import { bookTypeDefs } from "../modules/books/book.typeDefs";
@@ -11,5 +12,5 @@ import { reviewResolvers } from "../modules/reviews/review.resolvers";
 
 export const schema = makeExecutableSchema({
   typeDefs: [userTypeDefs, bookTypeDefs, authorTypeDefs, reviewTypeDefs],
-  resolvers: [userResolvers, bookResolvers, authorResolvers, reviewResolvers],
+  resolvers: [scalarResolvers, userResolvers, bookResolvers, authorResolvers, reviewResolvers],
 });
