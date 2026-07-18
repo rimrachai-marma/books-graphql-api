@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, ilike, lt, lte, gte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike, inArray, lt, lte, gte, or, sql, type SQL } from "drizzle-orm";
 
 import { books } from "../../drizzle/schema";
 import type { Database } from "../../config/db/database";
@@ -171,6 +171,10 @@ export class BookService {
     }
 
     return book;
+  }
+
+  async findByIds(ids: readonly string[]) {
+    return this.db.select().from(books).where(inArray(books.id, ids));
   }
 
   async createBook(data: NewBook) {

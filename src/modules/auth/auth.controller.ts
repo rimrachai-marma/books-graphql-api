@@ -15,7 +15,10 @@ export class AuthController {
 
   signup = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { name, email, password } = req.body;
-    const result = await this.authService.signup({ name, email, password });
+    const userAgent = req.headers["user-agent"];
+    const ipAddress = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress;
+
+    const result = await this.authService.signup({ name, email, password }, userAgent, ipAddress);
 
     res.cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || "access_token", result.accessToken.token, {
       httpOnly: true,
@@ -52,7 +55,10 @@ export class AuthController {
 
   login = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
-    const result = await this.authService.login({ email, password });
+    const userAgent = req.headers["user-agent"];
+    const ipAddress = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress;
+
+    const result = await this.authService.login({ email, password }, userAgent, ipAddress);
 
     res.cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || "access_token", result.accessToken.token, {
       httpOnly: true,

@@ -21,7 +21,7 @@ export class AuthService {
     return createHash("sha256").update(token).digest("hex");
   }
 
-  async signup(data: NewUser) {
+  async signup(data: NewUser, userAgent: string | undefined, ipAddress: string | undefined) {
     const existingUser = await this.db.select().from(users).where(eq(users.email, data.email)).limit(1);
 
     if (existingUser.length > 0) {
@@ -41,6 +41,7 @@ export class AuthService {
         id: users.id,
         name: users.name,
         email: users.email,
+        role: users.role,
       });
 
     if (!user) {
@@ -51,12 +52,15 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
     });
 
     await this.db.insert(refreshTokens).values({
       userId: user.id,
       tokenHash: this.hashToken(tokens.refreshToken.token),
       expiresAt: new Date(Date.now() + this.REFRESH_TOKEN_TTL_MS),
+      userAgent: userAgent ?? null,
+      ipAddress: ipAddress ?? null,
     });
 
     return {
@@ -65,7 +69,7 @@ export class AuthService {
     };
   }
 
-  async login(data: LoginData) {
+  async login(data: LoginData, userAgent: string | undefined, ipAddress: string | undefined) {
     const [user] = await this.db.select().from(users).where(eq(users.email, data.email)).limit(1);
 
     if (!user || !(await new PasswordHasher().compare(data.password, user.hashedPassword))) {
@@ -76,16 +80,24 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
     });
 
     await this.db.insert(refreshTokens).values({
       userId: user.id,
       tokenHash: this.hashToken(tokens.refreshToken.token),
       expiresAt: new Date(Date.now() + this.REFRESH_TOKEN_TTL_MS),
+      userAgent: userAgent ?? null,
+      ipAddress: ipAddress ?? null,
     });
 
     return {
-      user,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
       ...tokens,
     };
   }
@@ -142,6 +154,7 @@ export class AuthService {
         id: payload.id,
         name: payload.name,
         email: payload.email,
+        role: payload.role,
       });
 
       await tx.insert(refreshTokens).values({
@@ -156,7 +169,7 @@ export class AuthService {
     });
   }
 
-  private async issueTokens(user: Pick<User, "id" | "name" | "email">): Promise<{
+  private async issueTokens(user: Pick<User, "id" | "name" | "email" | "role">): Promise<{
     accessToken: { token: string; tokenType: string; expiresIn: number };
     refreshToken: { token: string; tokenType: string; expiresIn: number };
   }> {
@@ -164,7 +177,7 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: "USER" as "USER" | "ADMIN",
+      role: user.role,
     };
 
     const [accessTokenValue, refreshTokenValue] = await Promise.all([
