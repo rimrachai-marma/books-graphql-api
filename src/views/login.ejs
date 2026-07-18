@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <nav>
+    <div class="brand">📚</div>
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="/signup">Sign up</a>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width: 420px;">
+    <h1>Login</h1>
+    <p class="subtitle">Sets your session cookie, then redirects to GraphiQL for testing.</p>
+
+    <div class="card">
+      <form id="login-form">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="email" />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password" />
+
+        <button type="submit">Log in</button>
+        <div class="error-box" id="error-box"></div>
+      </form>
+
+      <div class="form-footer">
+        No account? <a href="/signup">Sign up</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("login-form");
+    const errorBox = document.getElementById("error-box");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorBox.style.display = "none";
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorBox.textContent = data.message || "Login failed.";
+          if (data.errors) errorBox.textContent += "\n" + JSON.stringify(data.errors, null, 2);
+          errorBox.style.display = "block";
+          return;
+        }
+
+        window.location.href = "/graphql";
+      } catch (err) {
+        errorBox.textContent = "Network error: " + err.message;
+        errorBox.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

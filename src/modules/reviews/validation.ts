@@ -24,7 +24,7 @@ export const reviewsQuerySchema = z
   });
 
 export const createReviewSchema = z.object({
-  bookId: z.uuid("Invalid book id"),
+  bookId: z.uuid("Provide a valid book id"),
   rating: z.number().int().min(1, "Rating must be at least 1").max(5, "Rating must be at most 5"),
   content: z.string().min(1, "Content is required").max(2000, "Content must be 2000 characters or fewer"),
 });

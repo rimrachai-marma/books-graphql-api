@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <nav>
+    <div class="brand">📚</div>
+    <div class="links">
+      <span id="auth-status">checking session…</span>
+      <a href="/login">Login</a>
+      <a href="/signup">Sign up</a>
+      <a href="/graphql" target="_blank">GraphiQL</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1><%= title %></h1>
+    <p class="subtitle">Books / Authors / Reviews / Users GraphQL API a quick reference and a live tester.</p>
+
+    <h2>Auth endpoints (REST)</h2>
+    <div class="card">
+      <table>
+        <tr><th>Method</th><th>Path</th><th>Body</th></tr>
+        <tr><td>POST</td><td><code>/api/auth/signup</code></td><td><code>{ name, email, password }</code></td></tr>
+        <tr><td>POST</td><td><code>/api/auth/login</code></td><td><code>{ email, password }</code></td></tr>
+        <tr><td>POST</td><td><code>/api/auth/refresh</code></td><td>uses <code>refresh_token</code> cookie</td></tr>
+        <tr><td>GET</td><td><code>/api/auth/verify</code></td><td>uses <code>access_token</code> cookie</td></tr>
+        <tr><td>POST</td><td><code>/api/auth/logout</code></td><td>clears cookies</td></tr>
+      </table>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-top: 12px;">
+        Login/signup set httpOnly <code>access_token</code> and <code>refresh_token</code> cookies.
+        Once set, every request to this origin (including <code>/graphql</code>) sends them automatically.
+      </p>
+    </div>
+
+    <h2>Sample queries &amp; mutations</h2>
+    <div class="card">
+      <p>Click a sample to load it into the tester below.</p>
+      <div class="grid-2" id="samples"></div>
+    </div>
+
+    <h2>Try it</h2>
+    <div class="card">
+      <label for="query">Query / Mutation</label>
+      <textarea id="query" rows="12">query Me {
+  me {
+    id
+    name
+    email
+  }
+}
+      </textarea>
+
+      <label for="variables">Variables (JSON)</label>
+      <textarea id="variables" rows="8">{}</textarea>
+
+      <button id="run">Run</button>
+
+      <label style="margin-top: 24px;">Response</label>
+      <pre id="output">// response will appear here</pre>
+    </div>
+  </div>
+
+  <script>
+    const samples = [
+      {
+        label: "List books",
+        query: `query Books {
+  books(first: 5, sort: { field: CREATED, direction: DESC }) {
+    edges {
+      cursor
+      node { id title author { name } }
+    }
+    totalCount
+  }
+}`,
+        variables: {},
+      },
+      {
+        label: "Current user (me)",
+        query: `query Me {
+  me { id name email }
+}`,
+        variables: {},
+      },
+      {
+        label: "Create book",
+        query: `mutation CreateBook($input: CreateBookInput!) {
+  createBook(input: $input) {
+    id
+    title
+    author { name }
+  }
+}`,
+        variables: { input: { title: "Dune", authorId: "PASTE_AUTHOR_ID" } },
+      },
+      {
+        label: "Create review",
+        query: `mutation CreateReview($input: CreateReviewInput!) {
+  createReview(input: $input) {
+    id
+    rating
+    content
+  }
+}`,
+        variables: { input: { bookId: "PASTE_BOOK_ID", rating: 5, content: "Loved it." } },
+      },
+    ];
+
+    const samplesEl = document.getElementById("samples");
+    samples.forEach((s) => {
+      const btn = document.createElement("button");
+      btn.className = "secondary";
+      btn.textContent = s.label;
+      btn.style.marginTop = "0";
+      btn.onclick = () => {
+        const queryEl = document.getElementById("query");
+        queryEl.value = s.query;
+        document.getElementById("variables").value = JSON.stringify(s.variables, null, 2);
+        queryEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        queryEl.focus();
+      };
+      samplesEl.appendChild(btn);
+    });
+
+    document.getElementById("run").addEventListener("click", async () => {
+      const output = document.getElementById("output");
+      output.textContent = "running…";
+
+      let variables = {};
+      try {
+        variables = JSON.parse(document.getElementById("variables").value || "{}");
+      } catch {
+        output.textContent = "Invalid JSON in variables.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/graphql", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include", // send the auth cookie
+          body: JSON.stringify({ query: document.getElementById("query").value, variables }),
+        });
+        const data = await res.json();
+        output.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        output.textContent = "Request failed: " + err.message;
+      }finally {
+        output.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+
+    // Session indicator
+    (async () => {
+      const el = document.getElementById("auth-status");
+      try {
+        const res = await fetch("/api/auth/verify", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          el.textContent = "Logged in as " + data.data.email;
+          el.classList.add("logged-in");
+        } else {
+          el.textContent = "Not logged in";
+        }
+      } catch {
+        el.textContent = "Not logged in";
+      }
+    })();
+  </script>
+</body>
+</html>

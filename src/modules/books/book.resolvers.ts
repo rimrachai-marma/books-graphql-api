@@ -18,7 +18,7 @@ export const bookResolvers = {
     books: async (_: unknown, args: unknown, context: GraphQLContext) => {
       const bookService = new BookService(context.db);
 
-      const parsed = await booksQuerySchema.safeParse(args);
+      const parsed = booksQuerySchema.safeParse(args);
 
       if (!parsed.success) {
         const flattened = z.flattenError(parsed.error);

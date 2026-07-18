@@ -36,7 +36,7 @@ export const booksQuerySchema = z
 
 export const createBookSchema = z.object({
   title: z.string().min(1, "Title is required").max(255, "Title must be 255 characters or fewer"),
-  authorId: z.string().min(1, "Author ID is required"),
+  authorId: z.uuid("Provide a valid author id"),
 });
 
 export const updateBookSchema = z.object({
