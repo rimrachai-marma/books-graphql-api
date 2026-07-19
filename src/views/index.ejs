@@ -10,9 +10,14 @@
   <nav>
     <div class="brand">📚</div>
     <div class="links">
-      <span id="auth-status">checking session…</span>
-      <a href="/login">Login</a>
-      <a href="/signup">Sign up</a>
+      <% if (user) { %>
+        <span id="auth-status" class="logged-in">Logged in as <%= user.email %></span>
+        <a href="logout" id="logout-link">Logout</a>
+      <% } else { %>
+        <span id="auth-status">Not logged in</span>
+        <a href="/login">Login</a>
+        <a href="/signup">Sign up</a>
+      <% } %>
       <a href="/graphql" target="_blank">GraphiQL</a>
     </div>
   </nav>
@@ -52,8 +57,7 @@
     name
     email
   }
-}
-      </textarea>
+}</textarea>
 
       <label for="variables">Variables (JSON)</label>
       <textarea id="variables" rows="8">{}</textarea>
@@ -150,27 +154,22 @@
         output.textContent = JSON.stringify(data, null, 2);
       } catch (err) {
         output.textContent = "Request failed: " + err.message;
-      }finally {
+      } finally {
         output.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     });
 
-    // Session indicator
-    (async () => {
-      const el = document.getElementById("auth-status");
-      try {
-        const res = await fetch("/api/auth/verify", { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          el.textContent = "Logged in as " + data.data.email;
-          el.classList.add("logged-in");
-        } else {
-          el.textContent = "Not logged in";
+    const logoutLink = document.getElementById("logout-link");
+    if (logoutLink) {
+      logoutLink.addEventListener("click", async (e) => {
+        e.preventDefault();
+        try {
+          await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+        } finally {
+          window.location.href = "/";
         }
-      } catch {
-        el.textContent = "Not logged in";
-      }
-    })();
+      });
+    }
   </script>
 </body>
 </html>

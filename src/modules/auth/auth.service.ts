@@ -102,19 +102,34 @@ export class AuthService {
     };
   }
 
-  async refreshToken(incomingToken: string, userAgent: string | undefined, ipAddress: string | undefined) {
-    const payload = await new JWTService(this.REFRESH_TOKEN_TTL).verify(incomingToken);
+  async logout(refreshToken: string) {
+    const hash = this.hashToken(refreshToken);
+    await this.db
+      .update(refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(and(eq(refreshTokens.tokenHash, hash), isNull(refreshTokens.revokedAt)));
+  }
+
+  async logoutAll(userId: string) {
+    await this.db
+      .update(refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt)));
+  }
+
+  async refreshToken(refreshToken: string, userAgent: string | undefined, ipAddress: string | undefined) {
+    const payload = await new JWTService(this.REFRESH_TOKEN_TTL).verify(refreshToken);
 
     if (!payload) {
       throw new AppError(401, "Invalid refresh token");
     }
 
-    const incomingHash = this.hashToken(incomingToken);
+    const refreshTokenHash = this.hashToken(refreshToken);
 
     const [record] = await this.db
       .select()
       .from(refreshTokens)
-      .where(and(eq(refreshTokens.tokenHash, incomingHash), gt(refreshTokens.expiresAt, new Date())));
+      .where(and(eq(refreshTokens.tokenHash, refreshTokenHash), gt(refreshTokens.expiresAt, new Date())));
 
     if (!record) {
       throw new AppError(401, "Invalid refresh token");
@@ -150,7 +165,7 @@ export class AuthService {
         throw new AppError(401, "Invalid refresh token");
       }
 
-      const tokens = await this.issueTokens({
+      const newTokens = await this.issueTokens({
         id: payload.id,
         name: payload.name,
         email: payload.email,
@@ -159,13 +174,13 @@ export class AuthService {
 
       await tx.insert(refreshTokens).values({
         userId: payload.id,
-        tokenHash: this.hashToken(tokens.refreshToken.token),
+        tokenHash: this.hashToken(newTokens.refreshToken.token),
         expiresAt: new Date(Date.now() + this.REFRESH_TOKEN_TTL_MS),
         userAgent: userAgent ?? null,
         ipAddress: ipAddress ?? null,
       });
 
-      return tokens;
+      return newTokens;
     });
   }
 

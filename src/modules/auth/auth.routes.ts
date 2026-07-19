@@ -10,7 +10,11 @@ const authController = new AuthController();
 
 router.post("/signup", validateRequestBody(signupSchema), authController.signup);
 router.post("/login", validateRequestBody(loginSchema), authController.login);
+
 router.post("/refresh", authController.refresh);
 router.get("/verify", auth, authController.verify);
+
+router.post("/logout", authController.logout);
+router.post("/logout-all", auth, authController.logoutAll);
 
 export default router;

@@ -30,5 +30,10 @@ app.use("/api/auth", authRoutes);
 // GraphQL endpoint
 app.use(yoga.graphqlEndpoint, yoga);
 
-app.use(routeNotFound);
-app.use(errorHandler);
+app.use("/api/{*splat}", routeNotFound);
+app.use("/api/{*splat}", errorHandler);
+
+// NOT FOUND PAGE
+app.use("/{*splat}", (req, res) => {
+  res.status(404).render("not-found", { url: req.originalUrl });
+});

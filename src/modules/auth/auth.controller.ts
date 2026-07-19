@@ -93,6 +93,29 @@ export class AuthController {
     });
   });
 
+  logout = asyncHandler(async (req: Request, res: Response) => {
+    const cookies = new CookieMap(req.headers.cookie ?? "");
+    const refreshToken = cookies.get(process.env.REFRESH_TOKEN_COOKIE_NAME || "refresh_token");
+
+    if (refreshToken) {
+      await this.authService.logout(refreshToken).catch(() => {});
+    }
+
+    res.clearCookie(process.env.ACCESS_TOKEN_COOKIE_NAME || "access_token");
+    res.clearCookie(process.env.REFRESH_TOKEN_COOKIE_NAME || "refresh_token");
+
+    res.json({ status: "success", message: "Logged out successfully." });
+  });
+
+  logoutAll = asyncHandler(async (req: Request, res: Response) => {
+    await this.authService.logoutAll(req.user!.id);
+
+    res.clearCookie(process.env.ACCESS_TOKEN_COOKIE_NAME || "access_token");
+    res.clearCookie(process.env.REFRESH_TOKEN_COOKIE_NAME || "refresh_token");
+
+    res.json({ status: "success", message: "Logged out of all devices successfully." });
+  });
+
   refresh = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const cookies = new CookieMap(req.headers.cookie ?? "");
 
@@ -107,6 +130,20 @@ export class AuthController {
     const ipAddress = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress;
 
     const result = await this.authService.refreshToken(refreshToken, userAgent, ipAddress);
+
+    res.cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || "access_token", result.accessToken.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: result.accessToken.expiresIn, // 15 minutes
+    });
+
+    res.cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || "refresh_token", result.refreshToken.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: result.refreshToken.expiresIn, // 30 days
+    });
 
     res.json({
       status: "success",
