@@ -12,7 +12,11 @@ export const authors = pgTable(
     createdAt,
     updatedAt,
   },
-  (table) => [index("authors_name_idx").on(table.name)],
+  (table) => [
+    index("authors_name_idx").on(table.name),
+    index("authors_created_at_id_idx").on(table.createdAt, table.id),
+    index("authors_name_id_idx").on(table.name, table.id),
+  ],
 );
 
 export const authorsReference = relations(authors, ({ many }) => ({

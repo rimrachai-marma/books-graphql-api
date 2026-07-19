@@ -41,5 +41,5 @@ export const createBookSchema = z.object({
 
 export const updateBookSchema = z.object({
   title: z.string().min(1, "Title cannot be empty").max(255, "Title must be 255 characters or fewer").optional(),
-  authorId: z.string().min(1, "Author ID cannot be empty").optional(),
+  authorId: z.uuid("Provide a valid author id").optional(),
 });

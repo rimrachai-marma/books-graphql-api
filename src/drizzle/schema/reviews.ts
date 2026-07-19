@@ -27,6 +27,7 @@ export const reviews = pgTable(
   (table) => [
     index("reviews_user_id_idx").on(table.userId),
     index("reviews_book_id_idx").on(table.bookId),
+    index("reviews_book_id_created_at_id_idx").on(table.bookId, table.createdAt, table.id),
   ],
 );
 

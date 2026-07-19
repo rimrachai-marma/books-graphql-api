@@ -52,7 +52,7 @@ export const authorTypeDefs = /* GraphQL */ `
     author(id: ID!): Author
     authors(
       filter: AuthorFilterInput
-      sort: AuthorSortInput
+      sort: AuthorSortInput!
       first: Int
       after: Cursor
       last: Int
