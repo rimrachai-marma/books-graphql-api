@@ -11,7 +11,7 @@
     <div class="brand">📚</div>
     <div class="links">
       <% if (user) { %>
-        <span id="auth-status" class="logged-in">Logged in as <%= user.email %></span>
+        <span id="auth-status" class="logged-in">Logged in as <%= user.email %> (<%= user.role %>)</span>
         <a href="logout" id="logout-link">Logout</a>
       <% } else { %>
         <span id="auth-status">Not logged in</span>
@@ -34,11 +34,33 @@
         <tr><td>POST</td><td><code>/api/auth/login</code></td><td><code>{ email, password }</code></td></tr>
         <tr><td>POST</td><td><code>/api/auth/refresh</code></td><td>uses <code>refresh_token</code> cookie</td></tr>
         <tr><td>GET</td><td><code>/api/auth/verify</code></td><td>uses <code>access_token</code> cookie</td></tr>
-        <tr><td>POST</td><td><code>/api/auth/logout</code></td><td>clears cookies</td></tr>
+        <tr><td>POST</td><td><code>/api/auth/logout</code></td><td>clears cookies, revokes current refresh token</td></tr>
+        <tr><td>POST</td><td><code>/api/auth/logout-all</code></td><td>requires auth; revokes every refresh token for the user</td></tr>
       </table>
       <p style="color: var(--muted); font-size: 0.85rem; margin-top: 12px;">
         Login/signup set httpOnly <code>access_token</code> and <code>refresh_token</code> cookies.
         Once set, every request to this origin (including <code>/graphql</code>) sends them automatically.
+      </p>
+    </div>
+
+    <h2>GraphQL query features</h2>
+    <div class="card">
+      <p style="margin-top: 0;">
+        <code>books</code>, <code>authors</code>, <code>users</code>, and <code>reviews</code> all use Relay-style
+        cursor pagination: pass <code>first</code>/<code>after</code> to page forward or
+        <code>last</code>/<code>before</code> to page backward. Each connection returns <code>edges</code>,
+        <code>pageInfo</code>, and <code>totalCount</code>.
+      </p>
+      <p>
+        <code>books</code>, <code>authors</code>, and <code>users</code> also accept a <code>filter</code>
+        (e.g. <code>titleContains</code>, <code>nameContains</code>, <code>search</code>, <code>createdAfter</code>,
+        <code>createdBefore</code>) and a required <code>sort</code> input.
+      </p>
+      <p style="margin-bottom: 0;">
+        Mutations on <code>Book</code> and <code>Review</code> require login and can only be edited/deleted by their
+        owner. Mutations on <code>Author</code> (<code>createAuthor</code>, <code>updateAuthor</code>,
+        <code>deleteAuthor</code>) require an <code>ADMIN</code> account — try
+        <code>admin@example.com / Admin123!</code> if you seeded the database.
       </p>
     </div>
 
@@ -79,10 +101,47 @@
       cursor
       node { id title author { name } }
     }
+    pageInfo { hasNextPage endCursor }
     totalCount
   }
 }`,
         variables: {},
+      },
+      {
+        label: "List authors",
+        query: `query Authors {
+  authors(first: 10, sort: { field: NAME, direction: ASC }) {
+    edges {
+      node { id name createdAt }
+    }
+    totalCount
+  }
+}`,
+        variables: {},
+      },
+      {
+        label: "List users",
+        query: `query Users {
+  users(first: 10, sort: { field: CREATED, direction: DESC }) {
+    edges {
+      node { id name email createdAt }
+    }
+    totalCount
+  }
+}`,
+        variables: {},
+      },
+      {
+        label: "List reviews for a book",
+        query: `query Reviews($bookId: ID!) {
+  reviews(bookId: $bookId, first: 10) {
+    edges {
+      node { id rating content user { name } }
+    }
+    totalCount
+  }
+}`,
+        variables: { bookId: "PASTE_BOOK_ID" },
       },
       {
         label: "Current user (me)",
@@ -103,6 +162,26 @@
         variables: { input: { title: "Dune", authorId: "PASTE_AUTHOR_ID" } },
       },
       {
+        label: "Update book",
+        query: `mutation UpdateBook($id: ID!, $input: UpdateBookInput!) {
+  updateBook(id: $id, input: $input) {
+    id
+    title
+  }
+}`,
+        variables: { id: "PASTE_BOOK_ID", input: { title: "Dune (Revised)" } },
+      },
+      {
+        label: "Delete book",
+        query: `mutation DeleteBook($id: ID!) {
+  deleteBook(id: $id) {
+    id
+    title
+  }
+}`,
+        variables: { id: "PASTE_BOOK_ID" },
+      },
+      {
         label: "Create review",
         query: `mutation CreateReview($input: CreateReviewInput!) {
   createReview(input: $input) {
@@ -112,6 +191,36 @@
   }
 }`,
         variables: { input: { bookId: "PASTE_BOOK_ID", rating: 5, content: "Loved it." } },
+      },
+      {
+        label: "Delete review",
+        query: `mutation DeleteReview($id: ID!) {
+  deleteReview(id: $id) {
+    id
+  }
+}`,
+        variables: { id: "PASTE_REVIEW_ID" },
+      },
+      {
+        label: "Update my profile",
+        query: `mutation UpdateUser($input: UpdateUserInput!) {
+  updateUser(input: $input) {
+    id
+    name
+    email
+  }
+}`,
+        variables: { input: { name: "New Name" } },
+      },
+      {
+        label: "Create author (admin only)",
+        query: `mutation CreateAuthor($input: CreateAuthorInput!) {
+  createAuthor(input: $input) {
+    id
+    name
+  }
+}`,
+        variables: { input: { name: "N.K. Jemisin" } },
       },
     ];
 

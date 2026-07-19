@@ -1,5 +1,5 @@
 {
-  "name": "graphql-server-books",
+  "name": "books-graphql-api",
   "module": "index.ts",
   "type": "module",
   "private": true,
