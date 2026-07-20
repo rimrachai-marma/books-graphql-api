@@ -9,8 +9,12 @@ import { authorTypeDefs } from "../modules/authors/author.typeDefs";
 import { authorResolvers } from "../modules/authors/author.resolvers";
 import { reviewTypeDefs } from "../modules/reviews/review.typeDefs";
 import { reviewResolvers } from "../modules/reviews/review.resolvers";
+import { directiveTypeDefs } from "./directives.typeDefs";
+import { applyDirectiveTransformers } from "./directives";
 
-export const schema = makeExecutableSchema({
-  typeDefs: [userTypeDefs, bookTypeDefs, authorTypeDefs, reviewTypeDefs],
+const executableSchema = makeExecutableSchema({
+  typeDefs: [directiveTypeDefs, userTypeDefs, bookTypeDefs, authorTypeDefs, reviewTypeDefs],
   resolvers: [scalarResolvers, userResolvers, bookResolvers, authorResolvers, reviewResolvers],
 });
+
+export const schema = applyDirectiveTransformers(executableSchema);

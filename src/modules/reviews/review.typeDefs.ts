@@ -43,8 +43,8 @@ export const reviewTypeDefs = /* GraphQL */ `
     content: String!
   }
 
-  type Mutation @auth {
-    createReview(input: CreateReviewInput!): Review!
-    deleteReview(id: ID!): Review
+  type Mutation {
+    createReview(input: CreateReviewInput!): Review! @auth
+    deleteReview(id: ID!): Review @auth
   }
 `;

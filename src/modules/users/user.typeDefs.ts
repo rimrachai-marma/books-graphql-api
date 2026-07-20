@@ -67,7 +67,7 @@ export const userTypeDefs = /* GraphQL */ `
     email: String
   }
 
-  type Mutation @auth {
-    updateUser(input: UpdateUserInput!): User!
+  type Mutation {
+    updateUser(input: UpdateUserInput!): User! @auth
   }
 `;

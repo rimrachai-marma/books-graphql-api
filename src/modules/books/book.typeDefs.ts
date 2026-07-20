@@ -76,9 +76,9 @@ export const bookTypeDefs = /* GraphQL */ `
     authorId: ID
   }
 
-  type Mutation @auth {
-    createBook(input: CreateBookInput!): Book!
-    updateBook(id: ID!, input: UpdateBookInput!): Book
-    deleteBook(id: ID!): Book
+  type Mutation {
+    createBook(input: CreateBookInput!): Book! @auth
+    updateBook(id: ID!, input: UpdateBookInput!): Book @auth
+    deleteBook(id: ID!): Book @auth
   }
 `;

@@ -1,4 +1,4 @@
 export const directiveTypeDefs = /* GraphQL */ `
-  directive @auth
-  directive @admin
+  directive @auth on FIELD_DEFINITION
+  directive @admin on FIELD_DEFINITION
 `;
