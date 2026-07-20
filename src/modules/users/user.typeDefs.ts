@@ -50,7 +50,7 @@ export const userTypeDefs = /* GraphQL */ `
   }
 
   type Query {
-    me: User
+    me: User @auth
     user(userId: ID!): User
     users(
       first: Int
@@ -67,7 +67,7 @@ export const userTypeDefs = /* GraphQL */ `
     email: String
   }
 
-  type Mutation {
+  type Mutation @auth {
     updateUser(input: UpdateUserInput!): User!
   }
 `;

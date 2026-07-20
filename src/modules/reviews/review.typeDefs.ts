@@ -34,13 +34,7 @@ export const reviewTypeDefs = /* GraphQL */ `
   }
 
   type Query {
-    reviews(
-      bookId: ID!
-      first: Int
-      after: Cursor
-      last: Int
-      before: Cursor
-    ): ReviewConnection!
+    reviews(bookId: ID!, first: Int, after: Cursor, last: Int, before: Cursor): ReviewConnection!
   }
 
   input CreateReviewInput {
@@ -49,7 +43,7 @@ export const reviewTypeDefs = /* GraphQL */ `
     content: String!
   }
 
-  type Mutation {
+  type Mutation @auth {
     createReview(input: CreateReviewInput!): Review!
     deleteReview(id: ID!): Review
   }

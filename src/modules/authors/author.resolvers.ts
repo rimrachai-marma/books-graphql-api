@@ -3,7 +3,6 @@ import type { GraphQLContext } from "../../types/context";
 import { AuthorService } from "./author.service";
 import { authorsQuerySchema, createAuthorSchema, updateAuthorSchema } from "./validation";
 import { NotFoundError, ValidationError } from "../../graphql/errors";
-import { requireAdmin } from "../../graphql/auth";
 
 export const authorResolvers = {
   Query: {
@@ -32,8 +31,6 @@ export const authorResolvers = {
 
   Mutation: {
     createAuthor: async (_: unknown, args: { input: unknown }, context: GraphQLContext) => {
-      requireAdmin(context);
-
       const parsed = createAuthorSchema.safeParse(args.input);
 
       if (!parsed.success) {
@@ -46,8 +43,6 @@ export const authorResolvers = {
     },
 
     updateAuthor: async (_: unknown, args: { id: string; input: unknown }, context: GraphQLContext) => {
-      requireAdmin(context);
-
       if (!z.uuid().safeParse(args.id).success) {
         throw new NotFoundError(`Author with id ${args.id} not found`);
       }
@@ -68,8 +63,6 @@ export const authorResolvers = {
     },
 
     deleteAuthor: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
-      requireAdmin(context);
-
       if (!z.uuid().safeParse(id).success) {
         throw new NotFoundError(`Author with id ${id} not found`);
       }

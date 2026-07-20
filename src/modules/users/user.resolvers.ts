@@ -1,16 +1,14 @@
 import z from "zod";
 import { UserService } from "./user.service";
 import type { GraphQLContext } from "../../types/context";
-import { requireAuth } from "../../graphql/auth";
 import { NotFoundError, ValidationError } from "../../graphql/errors";
 import { updateUserSchema, usersQuerySchema } from "./validation";
 
 export const userResolvers = {
   Query: {
     me: async (_: unknown, __: unknown, context: GraphQLContext) => {
-      const user = requireAuth(context);
       const userService = new UserService(context.db);
-      return userService.getUserById(user.id);
+      return userService.getUserById(context.user?.id!);
     },
 
     user: async (_: unknown, { userId }: { userId: string }, context: GraphQLContext) => {
@@ -37,8 +35,6 @@ export const userResolvers = {
 
   Mutation: {
     updateUser: async (_: unknown, args: { input: unknown }, context: GraphQLContext) => {
-      const user = requireAuth(context);
-
       const parsed = updateUserSchema.safeParse(args.input);
 
       if (!parsed.success) {
@@ -47,7 +43,7 @@ export const userResolvers = {
       }
 
       const userService = new UserService(context.db);
-      return userService.updateUser(user.id, parsed.data);
+      return userService.updateUser(context.user?.id!, parsed.data);
     },
   },
 };

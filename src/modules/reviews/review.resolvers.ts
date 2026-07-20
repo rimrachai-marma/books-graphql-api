@@ -3,7 +3,6 @@ import type { GraphQLContext } from "../../types/context";
 import { ReviewService } from "./review.service";
 import { createReviewSchema, reviewsQuerySchema } from "./validation";
 import { NotFoundError, ValidationError } from "../../graphql/errors";
-import { requireAuth } from "../../graphql/auth";
 
 export const reviewResolvers = {
   Query: {
@@ -32,8 +31,6 @@ export const reviewResolvers = {
 
   Mutation: {
     createReview: async (_: unknown, args: { input: unknown }, context: GraphQLContext) => {
-      const user = requireAuth(context);
-
       const parsed = createReviewSchema.safeParse(args.input);
 
       if (!parsed.success) {
@@ -44,20 +41,18 @@ export const reviewResolvers = {
       const reviewService = new ReviewService(context.db);
 
       return reviewService.createReview({
-        userId: user.id,
+        userId: context.user?.id!,
         ...parsed.data,
       });
     },
 
     deleteReview: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
-      const user = requireAuth(context);
-
       if (!z.uuid().safeParse(id).success) {
         throw new NotFoundError(`Review with id ${id} not found`);
       }
 
       const reviewService = new ReviewService(context.db);
-      return reviewService.deleteReview(user.id, id);
+      return reviewService.deleteReview(context.user?.id!, id);
     },
   },
 };

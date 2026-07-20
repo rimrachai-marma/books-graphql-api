@@ -68,7 +68,7 @@ export const authorTypeDefs = /* GraphQL */ `
     name: String
   }
 
-  type Mutation {
+  type Mutation @auth @admin {
     createAuthor(input: CreateAuthorInput!): Author!
     updateAuthor(id: ID!, input: UpdateAuthorInput!): Author
     deleteAuthor(id: ID!): Author
