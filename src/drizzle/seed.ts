@@ -4,6 +4,22 @@ import { PasswordHasher } from "../utils/password";
 
 const passwordHasher = new PasswordHasher();
 
+const DAY = 24 * 60 * 60 * 1000;
+
+/** Random date between `minDaysAgo` and `maxDaysAgo` days before now. */
+function randomPastDate(minDaysAgo: number, maxDaysAgo: number): Date {
+  const min = Date.now() - maxDaysAgo * DAY;
+  const max = Date.now() - minDaysAgo * DAY;
+  return new Date(min + Math.random() * (max - min));
+}
+
+/** Random date between `after` and now (or `after` + maxDaysLater, whichever is sooner). */
+function randomDateAfter(after: Date, maxDaysLater: number): Date {
+  const min = after.getTime();
+  const max = Math.min(Date.now(), min + maxDaysLater * DAY);
+  return new Date(min + Math.random() * Math.max(max - min, 0));
+}
+
 const AUTHOR_NAMES = [
   "Frank Herbert",
   "Ursula K. Le Guin",
@@ -50,12 +66,17 @@ async function seedUsers() {
   console.log("👤 Seeding users...");
 
   const rows = await Promise.all(
-    SEED_USERS.map(async (u) => ({
-      name: u.name,
-      email: u.email,
-      role: u.role,
-      hashedPassword: await passwordHasher.hash(u.password),
-    })),
+    SEED_USERS.map(async (u) => {
+      const createdAt = randomPastDate(30, 180); // spread over the last ~6 months
+      return {
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        hashedPassword: await passwordHasher.hash(u.password),
+        createdAt,
+        updatedAt: createdAt,
+      };
+    }),
   );
 
   const inserted = await db.insert(users).values(rows).returning();
@@ -66,11 +87,12 @@ async function seedUsers() {
 async function seedAuthors() {
   console.log("✍️  Seeding authors...");
 
-  const inserted = await db
-    .insert(authors)
-    .values(AUTHOR_NAMES.map((name) => ({ name })))
-    .returning();
+  const rows = AUTHOR_NAMES.map((name) => {
+    const createdAt = randomPastDate(60, 200); // authors "added" well before books
+    return { name, createdAt, updatedAt: createdAt };
+  });
 
+  const inserted = await db.insert(authors).values(rows).returning();
   console.log(`   -> ${inserted.length} authors created`);
   return inserted;
 }
@@ -85,12 +107,19 @@ async function seedBooks(
 
   const values = insertedAuthors.flatMap((author, authorIdx) => {
     const titles = BOOK_TITLES_BY_AUTHOR[author.name] ?? [];
-    return titles.map((title) => ({
-      title,
-      authorId: author.id,
-      // round-robin the "owner" across non-admin users
-      userId: nonAdminUsers[authorIdx % nonAdminUsers.length]!.id,
-    }));
+    const owner = nonAdminUsers[authorIdx % nonAdminUsers.length]!;
+
+    return titles.map((title) => {
+      // book "added" sometime after its owner joined
+      const createdAt = randomDateAfter(owner.createdAt, 90);
+      return {
+        title,
+        authorId: author.id,
+        userId: owner.id,
+        createdAt,
+        updatedAt: createdAt,
+      };
+    });
   });
 
   const inserted = await db.insert(books).values(values).returning();
@@ -109,11 +138,15 @@ async function seedReviews(insertedBooks: (typeof books.$inferSelect)[], inserte
 
     return reviewers.slice(0, 2).map((reviewer, i) => {
       const snippet = REVIEW_SNIPPETS[(bookIdx + i) % REVIEW_SNIPPETS.length]!;
+      // review posted sometime after the book existed
+      const createdAt = randomDateAfter(book.createdAt, 45);
       return {
         bookId: book.id,
         userId: reviewer.id,
         rating: snippet.rating,
         content: snippet.content,
+        createdAt,
+        updatedAt: createdAt,
       };
     });
   });

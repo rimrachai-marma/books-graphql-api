@@ -173,12 +173,12 @@ export const authenticate = asyncHandler(async (req: Request, res: Response, nex
 
       // Invalid refresh token
       req.user = undefined;
-      next();
+      return next();
     }
 
     // Invalid refresh token
     req.user = undefined;
-    next();
+    return next();
   }
 
   // No refresh token
