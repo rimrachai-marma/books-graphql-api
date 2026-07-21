@@ -110,8 +110,26 @@ export class ReviewService {
   }
 
   async createReview(data: NewReview) {
-    const [review] = await this.db.insert(reviews).values(data).returning();
-    return review;
+    try {
+      const [review] = await this.db.insert(reviews).values(data).returning();
+      return review;
+    } catch (error: any) {
+      const pgError = error.cause ?? error;
+
+      if (pgError.code === "23503") {
+        if (pgError.constraint_name?.includes("book_id")) {
+          throw new NotFoundError("Book not found");
+        }
+        if (pgError.constraint_name?.includes("user_id")) {
+          throw new NotFoundError("User not found");
+        }
+        throw new ValidationError("Invalid reference", {
+          reference: pgError.constraint_name ?? "unknown",
+        });
+      }
+
+      throw error;
+    }
   }
 
   async deleteReview(userId: string, id: string) {

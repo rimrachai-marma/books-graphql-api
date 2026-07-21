@@ -55,11 +55,7 @@ export const authorResolvers = {
       }
 
       const authorService = new AuthorService(context.db);
-      const author = await authorService.updateAuthor(args.id, parsed.data);
-
-      if (!author) throw new NotFoundError(`Author with id ${args.id} not found`);
-
-      return author;
+      return await authorService.updateAuthor(args.id, parsed.data);
     },
 
     deleteAuthor: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
@@ -68,11 +64,7 @@ export const authorResolvers = {
       }
 
       const authorService = new AuthorService(context.db);
-      const author = await authorService.deleteAuthor(id);
-
-      if (!author) throw new NotFoundError(`Author with id ${id} not found`);
-
-      return author;
+      return await authorService.deleteAuthor(id);
     },
   },
 };

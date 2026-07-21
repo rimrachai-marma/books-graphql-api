@@ -178,8 +178,27 @@ export class BookService {
   }
 
   async createBook(data: NewBook) {
-    const [book] = await this.db.insert(books).values(data).returning();
-    return book;
+    try {
+      const [book] = await this.db.insert(books).values(data).returning();
+      return book;
+    } catch (error: any) {
+      const pgError = error.cause ?? error;
+
+      if (pgError.code === "23503") {
+        if (pgError.constraint_name?.includes("author_id")) {
+          throw new NotFoundError("Author not found");
+        }
+        if (pgError.constraint_name?.includes("user_id")) {
+          throw new NotFoundError("User not found");
+        }
+
+        throw new ValidationError("Invalid reference", {
+          reference: pgError.constraint_name ?? "unknown",
+        });
+      }
+
+      throw error;
+    }
   }
 
   async updateBook(userId: string, id: string, data: UpdateBook) {

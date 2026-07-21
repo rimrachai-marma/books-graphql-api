@@ -69,13 +69,7 @@ export const bookResolvers = {
 
       const bookService = new BookService(context.db);
 
-      const book = await bookService.updateBook(context.user?.id!, args.id, parsed.data);
-
-      if (!book) {
-        throw new NotFoundError(`Book with id ${args.id} not found`);
-      }
-
-      return book;
+      return await bookService.updateBook(context.user?.id!, args.id, parsed.data);
     },
 
     deleteBook: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
@@ -84,13 +78,7 @@ export const bookResolvers = {
       }
 
       const bookService = new BookService(context.db);
-      const book = await bookService.deleteBook(context.user?.id!, id);
-
-      if (!book) {
-        throw new NotFoundError(`Book with id ${id} not found`);
-      }
-
-      return book;
+      return await bookService.deleteBook(context.user?.id!, id);
     },
   },
 };
